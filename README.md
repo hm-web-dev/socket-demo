@@ -1,6 +1,8 @@
 # socket-demo
 
-This template should help get you started developing with Vue 3 in Vite.
+This is a socket demo that was started using `npm init vue`. 
+
+Then Chat-GPT wrote server.js and some Vue code that I organized into `App.vue`.  Pretty neat if you ask me! 
 
 ## Recommended IDE Setup
 
