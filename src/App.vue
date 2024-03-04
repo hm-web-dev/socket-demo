@@ -1,6 +1,4 @@
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
 import {io} from 'socket.io-client'    
 
 const URL = process.env.NODE_ENV === "production" ? 
@@ -11,7 +9,7 @@ export const socket = io(URL);
 export default {
   data() {
     return {
-      availableCards: [],
+      availableCards: [5, 4, 3, 2, 1],
       selectedCard: '',
       selectedCards: [], 
       message: '',
@@ -28,6 +26,7 @@ export default {
       this.selectedCards = cards;
     });
 
+    // 
     socket.on('hi', (val) => {
       this.message = val.aKey;
       console.log(val);
@@ -36,6 +35,7 @@ export default {
   methods: {
     selectCard() {
       socket.emit('card selected', this.selectedCard);
+      this.selectedCards.push(this.selectedCard);
       this.selectedCard = '';
     }
   }
@@ -45,10 +45,6 @@ export default {
 <template>
   <header>
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
   </header>
 
   <main>
