@@ -24,12 +24,9 @@ const createRoom = (req, res) => {
     db.run(query, [
         code, expiry_datetime.toISOString()
     ], (err) => {
-        
         if (err) {
-            
             console.error(err.message);
             // TODO: log errors to db 
-            
             // try again if not unique 
             createRoom(req, res);
             res.status(400).json({ error: err.message });
@@ -43,39 +40,49 @@ const createRoom = (req, res) => {
 }
 
 /* ----- GET ROOM ---- */
-const getRoom = (req, res) => {
+const getRoom = async (room) => {
     // get the room from the database
-    const query =
-        `
+    return new Promise((resolve, reject) => {
+        const query = `
     SELECT * FROM room
     WHERE code = ?
     `
-    db.get(query, [req.params.room], (error, row) => {
-        if (error) {
-            console.error(error.message);
-            res.status(500).json({ error: error.message });
-        }
-        else if (row) {
-            // if the room is still active, send the room data to the client
-            if (new Date(row.expiry_date) > new Date()) {
-                res.json(row);
+        db.get(query, [room], (error, row) => {
+            if (error) {
+                console.error(error.message);
+                reject(403)
+            }
+            else if (row) {
+                // if the room is still active, send the room data to the client
+                if (new Date(row.expiry_date) > new Date()) {
+                    resolve(row);
+                }
+                else {
+                    reject(500)
+                }
             }
             else {
-                // if the room is not active, send a 500 error
-                res.status(500).json({ error: "ROOM EXPIRED" });
+                reject(404)
             }
-        }
-        else {
-            // if the room does not exist, send a 404 error
-            res.status(404).json({ error: "Room not found. Try again!" });
-        }
+        });
     });
+}
 
+/* ----- WORD GENERATOR ---- */
+const getWord = () => {
+    // TODO: actually get this from the database
+    // actually choose n random words (proportional to the size of the group) 
+    const allWords = [
+        'apple', 
+        'pony', 
+        'forest', 
+        'casino'
+    ]
+    return allWords[Math.floor(Math.random() * allWords.length)];
 }
 
 
 // helper functions
-
 const generateNewCode = () => {
     return Math.random().toString(36).substring(2, 8);
 }
@@ -83,5 +90,6 @@ const generateNewCode = () => {
 
 module.exports = {
     createRoom,
-    getRoom
+    getRoom, 
+    getWord
 }
