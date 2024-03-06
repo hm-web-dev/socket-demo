@@ -4,7 +4,7 @@
 -->
 
 <script>
-import GameState from '../utils'
+import { GameState } from '../utils'
 
 const PLAYER_STATES = {
     CLUER: 'cluer',
@@ -15,28 +15,44 @@ const PLAYER_STATES = {
 export default {
     props: {
         gameState: GameState,
-        players: Array,
         socket: Object,
-        guesser: String,
+        roomState: {
+            clues: Object,
+            guesser: String,
+            players: Array,
+            wordToGuess: String
+        },
     },
     watch: {
-        players(to, from) {
-            this.updateEmojis();
-        },
+        roomState: {
+            handler(to, from) {
+                console.log("room state changed");
+                this.updateEmojis(to);
+            },
+            deep: true
+        }
     },
     data() {
         return {
-            playerStates: {} // reduced below
+            playerStates: {}
+            // TODO: make this a computed property instead, it is cleaner
         }
     },
     created() {
-        this.updateEmojis();
+        this.updateEmojis(this.roomState);
         this.createListens();
     },
     methods: {
-        updateEmojis() {
-            this.playerStates = this.players.reduce((acc, player) => {
-                if (player === this.guesser) {
+        updateEmojis(to) {
+            // not really sure if I like this flow.
+            if (this.gameState === GameState.ROUND_END) {
+                this.playerStates = {};
+                return;
+            }
+            console.log(to);
+            this.playerStates = to.players.reduce((acc, player) => {
+                console.log("this player is a " + player);
+                if (player === to.guesser) {
                     acc[player] = PLAYER_STATES.GUESSER;
                 } else {
                     // if writing or loading 
@@ -45,18 +61,20 @@ export default {
                         acc[player] = this.playerStates[player];
                         return acc;
                     }
-                    if (this.GameState === GameState.WRITE_CLUES)
+                    if (this.gameState === GameState.WRITE_CLUES)
                         acc[player] = PLAYER_STATES.CLUER_WRITING;
                     else acc[player] = PLAYER_STATES.CLUER;
                 }
                 return acc;
             }, {});
-        }, 
+        },
         createListens() {
-            this.socket.on('clue submitted', (socketId, clue) => {
+            // computed props can't listen to the clue submitted event:
+            // instead once the clues change we can get the cluer to write 
+            this.socket.on('clue submitted', (socketId, _clue) => {
                 this.playerStates[socketId] = PLAYER_STATES.CLUER_WRITING_DONE;
             });
-            console.log(this.playerStates);
+            // TODO: do something with user leaving the room: socket event 'user left'
 
         }
     }
@@ -67,13 +85,13 @@ export default {
     <div>
         <h1>Players</h1>
         <ul>
-            <li v-for="player in players" :key="player" :class="playerStates[player]">{{ player }} / {{
+            <li v-for="player in roomState.players" :key="player" :class="playerStates[player]">{{ player }} / {{
                 playerStates[player] }}</li>
         </ul>
     </div>
 </template>
 
-<style>
+<style scoped>
 ul {
     list-style: none;
 }

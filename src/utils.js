@@ -8,4 +8,44 @@ const GameState = Object.freeze({
     ROUND_END: 4
 }); 
 
-export default GameState;
+// given map clues: {
+   //  cluer: clue
+// }, 
+// return { cluer: String, clue: String, isDupe: Boolean}
+const cluesMarkDupes = (clues) => {
+    let clueSet = new Set();
+    const clueObjects = [];
+    for (const cluer in clues) {
+        let o = new Object();
+        o.cluer = cluer;
+        o.clue = clues[cluer];
+        // mark duplicate clues
+        if (clueSet.has(clues[cluer])) {
+            o.isDupe = true;
+            // mark clueObjects with the same clue as a dupe
+            clueObjects.forEach((clueObject) => {
+                if (clueObject.clue === clues[cluer]) {
+                    clueObject.isDupe = true;
+                }
+            });
+        }
+        else {
+            clueSet.add(clues[cluer]);
+            o.isDupe = false;
+        }
+        clueObjects.push(o);
+    }
+    console.log(clueObjects);
+    return clueObjects;
+}
+
+// dupes removed for the guesser
+const cluesDupesRedacted = (clues) => {
+    const clueObjects = cluesMarkDupes(clues);
+    return clueObjects.map((clueObject) => ({
+        cluer: clueObject.cluer,
+        clue: clueObject.isDupe ? '--REDACTED--' : clueObject.clue,
+    }));
+}
+
+export { GameState, cluesMarkDupes, cluesDupesRedacted };

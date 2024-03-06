@@ -3,6 +3,7 @@ import App from './App.vue'
 import * as VueRouter from 'vue-router'
 import Game from './components/Game.vue'
 import './assets/main.css'
+import ToastPlugin from 'vue-toast-notification';
 
 // 1. Define route components.
 // These can be imported from other files
@@ -25,5 +26,5 @@ const router = VueRouter.createRouter({
   routes, // short for `routes: routes`
 })
 
-createApp(App).use(router).mount('#app')
+createApp(App).use(router).use(ToastPlugin).mount('#app')
 

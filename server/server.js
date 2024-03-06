@@ -68,17 +68,19 @@ app.post('/createRoom', (req, res) => {
 let roomData = {};
 /* roomId: {
     clues: {
-        cluer: String, clue: String
+        cluer: clue
     }, 
     guesser: String, 
     cluers: [String],
     wordToGuess: String
+    win: Boolean
     }
 */
 // Handle different socket connections
 io.on('connection', (socket) => {
     console.log('A user has connected');
 
+    // 1. Join a room 
     socket.on('join room', async (room) => {
         // TODO: call db.getRoom and only the join the room if the room exists.
         console.log(`${socket.id} joined room ${room}`);
@@ -92,6 +94,7 @@ io.on('connection', (socket) => {
             roomData[room]['cluers'] = [];
             // get a word from the database
             roomData[room]['wordToGuess'] = db.getWord();
+            roomData[room]['win'] = false;
             socket.to(room).emit('game state', GameState.LOADING_PLAYERS);
         } else {
             // if the room already exists, you are a cluer
@@ -100,13 +103,50 @@ io.on('connection', (socket) => {
         socket.to(room).emit('room state', roomData[room]);
     });
 
-    // Handle clue send from clients
+    // 2. Handle the cluer selection
     socket.on('clue', (clue, room) => {
         console.log(`User clue ${clue} in room ${room}`);
         roomData[room]['clues'][socket.id] = clue;
         // clue submitted by a cluer
         socket.to(room).emit('clue submitted', socket.id, clue);
         sendCluers(socket, room);
+    });
+
+    // 3. Handle the guesser guesses 
+    socket.on('guess', (guess, room) => {
+        console.log(`User guessed '${guess}' in room ${room}`);
+        socket.to(room).emit('guesser guessed', guess);
+        if (guess === roomData[room]['wordToGuess']) {
+            // the guesser guessed the word correctly
+            roomData[room]['win'] = true;
+            socket.to(room).emit('game state', GameState.ROUND_END);
+            socket.to(room).emit('room state', roomData[room]);
+        }
+    });
+
+    // 3.5 Handle gives up
+    socket.on('give up', (room) => {
+        console.log(`User gave up in room ${room}`);
+        socket.to(room).emit('game state', GameState.ROUND_END);
+    });
+
+    // 4. Handle the next round 
+    socket.on('next round', (room) => {
+        // TODO: only allow to start the next round if the game state is ROUND_END
+        // I don't have this as a part of the roomData but I should.
+        console.log(`Starting next round in room ${room}`);
+        // reset the clues
+        roomData[room]['clues'] = {};
+        // rotate guesser
+        const guesser = roomData[room]['cluers'].shift();
+        roomData[room]['cluers'].push(roomData[room]['guesser']);
+        roomData[room]['guesser'] = guesser;
+        roomData[room]['wordToGuess'] = db.getWord(); // new word
+        roomData[room]['win'] = false;
+        // start the next round
+        socket.to(room).emit('game state', GameState.WRITE_CLUES);
+        // broadcast to the room the room state 
+        socket.to(room).emit('room state', roomData[room]);
     });
 
     // Handle socket disconnections
@@ -157,9 +197,12 @@ const sendCluers = (socket, room) => {
         socket.to(room).emit('game state', GameState.REVEAL_CLUES);
         // we need to emit it to a specific room 
         // changed from io.to() to socket.to(); 
-        console.log('All cluers are ready');
         // broadcast to the room the room state 
         socket.to(room).emit('room state', roomData[room]);
+        // emit new game state 2 seconds after 
+        setTimeout(() => {
+            socket.to(room).emit('game state', GameState.GUESS);
+        }, 2000);
     }
 }
 
