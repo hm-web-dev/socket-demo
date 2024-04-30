@@ -21,7 +21,7 @@ export default {
     computed: {
         GameState() {
             return GameState;
-        },
+        }, // can read object GameState for HTML template
         submittedClues() {
             console.log(cluesMarkDupes(this.roomState.clues))
             return cluesMarkDupes(this.roomState.clues);
@@ -30,6 +30,7 @@ export default {
     created() {
         this.socket.on('guesser guessed', (guess) => {
             // TODO: remove toast. why is this showing up on other components? 
+            console.log(guess);
             let pop = this.$toast.open(
                 {
                     message: `Guesser guessed ${guess}`,
@@ -56,9 +57,9 @@ export default {
         <div v-if="gameState == GameState.WRITE_CLUES">
             <input type="text" v-model="clue" />
             <button @click="sendMessage">Send Clue</button>
-            <p>{{ Object.keys(roomState.clues).length }} clues submitted...</p>
+            <p> {{ Object.keys(roomState.clues).length }} clues submitted... </p>
         </div>
-        <div v-else-if="new Set(GameState.REVEAL_CLUES, GameState.GUESS, GameState.ROUND_END).has(gameState)" >
+        <div v-else-if="new Set([GameState.REVEAL_CLUES, GameState.GUESS, GameState.ROUND_END]).has(gameState)" >
             <p>All clues:</p>
             <ul>
                 <li v-for="c in submittedClues" :key="c" :class="c.isDupe ? 'dupe' : null">

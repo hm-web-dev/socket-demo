@@ -30,10 +30,10 @@ export default {
     },
     methods: {
         writeGuess() {
+            this.socket.emit('guess', this.guess, this.$route.params.id);
             if (this.guess == this.roomState.wordToGuess) {
                 // yay! 
                 this.roomState.win = true;
-                
             } else {
                 // try again 
                 // this is so ugly, but that's alright. 
@@ -47,13 +47,13 @@ export default {
                     });
 
                 this.guesses.push(this.guess);
+                this.socket.emit('guess', this.guess, this.$route.params.id);
                 this.guess = '';
             }
-            this.socket.emit('guess', this.guess, this.$route.params.id);
-        }, 
+        },
         nextRound() {
             this.socket.emit('next round', this.$route.params.id);
-        }, 
+        },
         giveUp() {
             this.socket.emit('give up', this.$route.params.id);
         }
@@ -90,7 +90,7 @@ export default {
         <div v-else-if="gameState === GameState.ROUND_END">
             <h1>Round end</h1>
             <h2>Word was: {{ roomState.wordToGuess }}</h2>
-            <h2 v-if="roomState.win">It took you {{  guesses.length + 1 }} guesses!</h2>
+            <h2 v-if="roomState.win">It took you {{ guesses.length + 1 }} guesses!</h2>
             <h2 v-else>Sorry, try again!</h2>
             <button @click="nextRound"> Next Round </button>
         </div>

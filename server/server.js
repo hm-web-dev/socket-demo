@@ -86,7 +86,8 @@ io.on('connection', (socket) => {
         console.log(`${socket.id} joined room ${room}`);
         await joinRoom(socket.id, room);
         // Add the clues to the map of clues
-        if (!roomData[room]) {
+
+        if (!roomData[room] || Object.keys(roomData[room]).length === 0) {
             roomData[room] = {};
             roomData[room]['clues'] = {};
             // you are the first person, so you are the guesser (for now)
@@ -152,24 +153,45 @@ io.on('connection', (socket) => {
     // Handle socket disconnections
     socket.on('disconnecting', function () {
         var self = this;
-        var rooms = Object.keys(self.rooms);
-        // TODO: update roomData to remove the disconnected user 
-        // and select a new guesser if the current guesser has disconnected
+        
+        var rooms = self.rooms;
+        console.log('A user has disconnected.');
 
         rooms.forEach(function (room) {
-            roomData[room]['clues'][self.id] = null;
+            // update roomData to remove the disconnected user 
+            // and select a new guesser if the current guesser has disconnected
+            if (!roomData[room] || Object.keys(roomData[room]).length === 0) {
+                return;
+            }
             if (roomData[room]['guesser'] === self.id) {
+                console.log("guesser left");
                 // the next cluer becomes the guesser
+                if (roomData[room]['cluers'].length == 0) {
+                    // if the guesser leaves, reset the room
+                    roomData[room] = {};
+                    return; 
+                }
                 roomData[room]['guesser'] = roomData[room]['cluers'][0];
+                // remove cluer 
+                removeCluer(roomData, room, roomData[room]['cluers'][0]);
+            } else {
+                // the disconnected user was a cluer. remove clues and cluer
+                delete roomData[room]['clues'][self.id];
+                removeCluer(roomData, room, self.id);
             }
             self.to(room).emit('user left', self.id);
             self.to(room).emit('room state', roomData[room]);
         });
-        console.log('A user has disconnected');
         socket.leaveAll();
     });
 });
 
+const removeCluer = (roomData, room, cluer) => {
+    const index = roomData[room]['cluers'].indexOf(cluer);
+    if (index > -1) {
+        roomData[room]['cluers'].splice(index, 1);
+    }
+}
 /* START SOCKET HELPER FUNCTIONS */
 
 // have the requesting socket join the correct room and leave all other rooms
@@ -192,13 +214,13 @@ const joinRoom = async (socketId, room) => {
 const sendCluers = (socket, room) => {
     const clues = roomData[room]['clues'];
     const numPlayers = io.sockets.adapter.rooms.get(room).size;
+    // we need to emit it to a specific room 
+    // changed from io.to() to socket.to(); 
+    // broadcast to the room the room state 
+    socket.to(room).emit('room state', roomData[room]);
     if (Object.keys(clues).length === numPlayers - 1) {
         // Emit the updated array of selected cards to all connected clients
         socket.to(room).emit('game state', GameState.REVEAL_CLUES);
-        // we need to emit it to a specific room 
-        // changed from io.to() to socket.to(); 
-        // broadcast to the room the room state 
-        socket.to(room).emit('room state', roomData[room]);
         // emit new game state 2 seconds after 
         setTimeout(() => {
             socket.to(room).emit('game state', GameState.GUESS);

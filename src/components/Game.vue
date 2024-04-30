@@ -77,7 +77,7 @@ export default {
                 this.roomState.players = [...stateData['cluers'], stateData['guesser']];
                 this.roomState.win = stateData['win'];
                 console.log(stateData['clues']);
-                console.log(this.roomState['players']);
+                console.log("Room state changed: players:" + this.roomState['players']);
             });
 
             this.socket.on('game state', (gameState) => {

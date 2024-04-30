@@ -76,7 +76,10 @@ const getWord = () => {
         'apple', 
         'pony', 
         'forest', 
-        'casino'
+        'casino', 
+        'penguin',  
+        'giraffe',
+        'shoelace'
     ]
     return allWords[Math.floor(Math.random() * allWords.length)];
 }

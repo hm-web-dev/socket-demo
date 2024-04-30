@@ -49,7 +49,6 @@ export default {
                 this.playerStates = {};
                 return;
             }
-            console.log(to);
             this.playerStates = to.players.reduce((acc, player) => {
                 console.log("this player is a " + player);
                 if (player === to.guesser) {
@@ -61,9 +60,9 @@ export default {
                         acc[player] = this.playerStates[player];
                         return acc;
                     }
-                    if (this.gameState === GameState.WRITE_CLUES)
-                        acc[player] = PLAYER_STATES.CLUER_WRITING;
-                    else acc[player] = PLAYER_STATES.CLUER;
+                    acc[player] = (this.gameState === GameState.WRITE_CLUES) ? PLAYER_STATES.CLUER_WRITING
+                        : PLAYER_STATES.CLUER;
+
                 }
                 return acc;
             }, {});
@@ -85,7 +84,8 @@ export default {
     <div>
         <h1>Players</h1>
         <ul>
-            <li v-for="player in roomState.players" :key="player" :class="playerStates[player]">{{ player }} / {{
+            <li v-for="player in roomState.players" :key="player"
+                :class="[playerStates[player], this.socket.id == player ? 'you' : '']">{{ player }} / {{
                 playerStates[player] }}</li>
         </ul>
     </div>
@@ -98,6 +98,10 @@ ul {
 
 li {
     margin: 0.5rem;
+}
+
+li.you {
+    font-weight: bold;
 }
 
 li::before {
