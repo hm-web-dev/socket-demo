@@ -20,7 +20,8 @@ export default {
             clues: Object,
             guesser: String,
             players: Array,
-            wordToGuess: String
+            wordToGuess: String, 
+            socketsToNames: Object, // maybe use map instead 
         },
     },
     watch: {
@@ -34,6 +35,7 @@ export default {
     },
     data() {
         return {
+            // playerStates: { 'socketId': PLAYER_STATES }
             playerStates: {}
             // TODO: make this a computed property instead, it is cleaner
         }
@@ -51,17 +53,19 @@ export default {
             }
             this.playerStates = to.players.reduce((acc, player) => {
                 console.log("this player is a " + player);
+                console.log(to.socketsToNames);
                 if (player === to.guesser) {
                     acc[player] = PLAYER_STATES.GUESSER;
                 } else {
-                    // if writing or loading 
-                    // also check if already done and don't change things 
-                    if (this.playerStates[player]) {
+                    // check if already done and don't change things 
+                    // because the socket will take care of changing to writing_done
+                    // TODO: LOGIC BUG, need to fix in a second
+                    if (this.playerStates[player] && this.gameState === GameState.WRITE_CLUES) {
                         acc[player] = this.playerStates[player];
                         return acc;
                     }
-                    acc[player] = (this.gameState === GameState.WRITE_CLUES) ? PLAYER_STATES.CLUER_WRITING
-                        : PLAYER_STATES.CLUER;
+                    acc[player] = (this.gameState === GameState.LOADING_PLAYERS) ? PLAYER_STATES.CLUER
+                        : PLAYER_STATES.CLUER_WRITING;
 
                 }
                 return acc;
@@ -85,7 +89,7 @@ export default {
         <h1>Players</h1>
         <ul>
             <li v-for="player in roomState.players" :key="player"
-                :class="[playerStates[player], this.socket.id == player ? 'you' : '']">{{ player }} / {{
+                :class="[playerStates[player], this.socket.id == player ? 'you' : '']">{{ roomState.socketsToNames[player] ?? player }} / {{
                 playerStates[player] }}</li>
         </ul>
     </div>

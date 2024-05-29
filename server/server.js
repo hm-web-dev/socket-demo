@@ -37,7 +37,11 @@ const server = http.createServer(app);
 const io = socketIO(server, {
     // have to add cors again for sockets
     cors: {
-        origin: "http://localhost:5173",
+        allowedOrigins: [
+            "http://localhost:5173",
+            "msfeng.local"
+        ],
+        // origin: "*", // allow all origins 
     }
 });
 
@@ -72,6 +76,7 @@ let roomData = {};
     }, 
     guesser: String, 
     cluers: [String],
+    socketsToNames: {String socketId: String name},
     wordToGuess: String
     win: Boolean
     }
@@ -81,7 +86,7 @@ io.on('connection', (socket) => {
     console.log('A user has connected');
 
     // 1. Join a room 
-    socket.on('join room', async (room) => {
+    socket.on('join room', async (room, name) => {
         // TODO: call db.getRoom and only the join the room if the room exists.
         console.log(`${socket.id} joined room ${room}`);
         await joinRoom(socket.id, room);
@@ -93,18 +98,30 @@ io.on('connection', (socket) => {
             // you are the first person, so you are the guesser (for now)
             roomData[room]['guesser'] = socket.id;
             roomData[room]['cluers'] = [];
+
             // get a word from the database
             roomData[room]['wordToGuess'] = db.getWord();
             roomData[room]['win'] = false;
             socket.to(room).emit('game state', GameState.LOADING_PLAYERS);
+            roomData[room]['socketsToNames'] = {};
         } else {
             // if the room already exists, you are a cluer
-            roomData[room]['cluers'].push(socket.id);    
+            roomData[room]['cluers'].push(socket.id);
+            // roomData[room]['socketsToNames'].set(
+            //     socket.id, name
+            // );
         }
+        roomData[room]['socketsToNames'][socket.id] = name;
         socket.to(room).emit('room state', roomData[room]);
     });
 
-    // 2. Handle the cluer selection
+    // 1.5 Move onto writing clues when ready to play
+    socket.on('start round', (room) => {
+        console.log(`Starting round in room ${room}`);
+        resetCluesAndWord(socket, room);
+    });
+
+    // 2. Handle the cluer clue-giving
     socket.on('clue', (clue, room) => {
         console.log(`User clue ${clue} in room ${room}`);
         roomData[room]['clues'][socket.id] = clue;
@@ -136,24 +153,18 @@ io.on('connection', (socket) => {
         // TODO: only allow to start the next round if the game state is ROUND_END
         // I don't have this as a part of the roomData but I should.
         console.log(`Starting next round in room ${room}`);
-        // reset the clues
-        roomData[room]['clues'] = {};
         // rotate guesser
         const guesser = roomData[room]['cluers'].shift();
         roomData[room]['cluers'].push(roomData[room]['guesser']);
         roomData[room]['guesser'] = guesser;
-        roomData[room]['wordToGuess'] = db.getWord(); // new word
-        roomData[room]['win'] = false;
-        // start the next round
-        socket.to(room).emit('game state', GameState.WRITE_CLUES);
-        // broadcast to the room the room state 
-        socket.to(room).emit('room state', roomData[room]);
+        // reset the clues
+        resetCluesAndWord(socket, room);
     });
 
     // Handle socket disconnections
     socket.on('disconnecting', function () {
         var self = this;
-        
+
         var rooms = self.rooms;
         console.log('A user has disconnected.');
 
@@ -169,15 +180,15 @@ io.on('connection', (socket) => {
                 if (roomData[room]['cluers'].length == 0) {
                     // if the guesser leaves, reset the room
                     roomData[room] = {};
-                    return; 
+                    return;
                 }
                 roomData[room]['guesser'] = roomData[room]['cluers'][0];
                 // remove cluer 
-                removeCluer(roomData, room, roomData[room]['cluers'][0]);
+                removeCluer(room, roomData[room]['cluers'][0]);
             } else {
                 // the disconnected user was a cluer. remove clues and cluer
                 delete roomData[room]['clues'][self.id];
-                removeCluer(roomData, room, self.id);
+                removeCluer(room, self.id);
             }
             self.to(room).emit('user left', self.id);
             self.to(room).emit('room state', roomData[room]);
@@ -186,11 +197,12 @@ io.on('connection', (socket) => {
     });
 });
 
-const removeCluer = (roomData, room, cluer) => {
+const removeCluer = (room, cluer) => {
     const index = roomData[room]['cluers'].indexOf(cluer);
     if (index > -1) {
         roomData[room]['cluers'].splice(index, 1);
     }
+    delete roomData[room]['socketsToNames'][cluer];
 }
 /* START SOCKET HELPER FUNCTIONS */
 
@@ -207,6 +219,16 @@ const joinRoom = async (socketId, room) => {
             socket.join(room);
         }
     });
+}
+
+const resetCluesAndWord = (socket, room) => {
+    roomData[room]['clues'] = {};
+    roomData[room]['wordToGuess'] = db.getWord(); // new word
+    roomData[room]['win'] = false;
+    // start the next round
+    socket.to(room).emit('game state', GameState.WRITE_CLUES);
+    // broadcast to the room the room state 
+    socket.to(room).emit('room state', roomData[room]);
 }
 
 // emit to the rest of the sockets only if all the cluers are ready. 

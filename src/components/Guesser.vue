@@ -67,7 +67,12 @@ export default {
     <div>
 
         <h1>Guesser!</h1>
-        <div v-if="gameState === GameState.WRITE_CLUES">
+        <div v-if="gameState === GameState.LOADING_PLAYERS">
+            <h1>Waiting for players...</h1>
+            Click to begin the round! 
+            <button :disabled="roomState.players.length < 3" @click="socket.emit('start round', this.$route.params.id)">Start Game</button>
+        </div>
+        <div v-else-if="gameState === GameState.WRITE_CLUES">
             <h1>Waiting for other players to submit clues</h1>
         </div>
         <div v-else-if="gameState === GameState.REVEAL_CLUES">
