@@ -69,19 +69,13 @@ const getRoom = async (room) => {
 }
 
 /* ----- WORD GENERATOR ---- */
-const getWord = () => {
-    // TODO: actually get this from the database
-    // actually choose n random words (proportional to the size of the group) 
-    const allWords = [
-        'apple', 
-        'pony', 
-        'forest', 
-        'casino', 
-        'penguin',  
-        'giraffe',
-        'shoelace'
-    ]
-    return allWords[Math.floor(Math.random() * allWords.length)];
+const getWord = async () => {
+    // note: fetch is native but has two "thens", that's annoying. I'd rather use axios. 
+    const response = await
+        fetch("http://random-word-form.herokuapp.com/random/noun?count=100");
+    const words = await response.text();
+    // possibly 
+    return words[Math.floor(Math.random() *words.length)];
 }
 
 
@@ -93,6 +87,6 @@ const generateNewCode = () => {
 
 module.exports = {
     createRoom,
-    getRoom, 
+    getRoom,
     getWord
 }
