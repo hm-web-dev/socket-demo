@@ -5,9 +5,8 @@ This is a socket demo that was started using `npm init vue`.
 Then Chat-GPT wrote server.js and some Vue code that I organized into `App.vue`.  Pretty neat if you ask me! 
 
 TODO: 
-- Allow people to change their name when joining. 
-- Do not allow people to join a room when the game is going. 
-- Allow to create rooms in a database
+- Word DB: Allow voting on words
+- Allow adding words to the DB
 
 ## Recommended IDE Setup
 

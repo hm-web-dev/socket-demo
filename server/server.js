@@ -8,7 +8,10 @@ const db = require('./db');
 
 // Import GameState 
 const { GameState } = require('./constants');
-
+const allowedOrigins = [
+            "http://localhost:5173",
+            "msfeng.local"
+        ]
 // Create the express app and the server
 const app = express();
 app.use(express.json());
@@ -17,12 +20,10 @@ app.use(express.json());
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 app.use((req, res, next) => {
     // Allow access from multiple origins
-    const allowedOrigins = [
-        "http://localhost:5173",
-    ];
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
+        console.log(`CORS: Allowed origin ${origin}`);
     }
     // Allow specific requests
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -37,36 +38,31 @@ const server = http.createServer(app);
 const io = socketIO(server, {
     // have to add cors again for sockets
     cors: {
-        allowedOrigins: [
-            "http://localhost:5173",
-            "msfeng.local"
-        ],
+        allowedOrigins: allowedOrigins,
         // origin: "*", // allow all origins 
     }
 });
 
 // Create a new room 
 app.post('/createRoom', (req, res) => {
-    // create an active room in database, will last for 1 hour
+    // create an active room in database
     db.createRoom(req, res);
 
 });
 
 // Serve a specific room 
-// app.post('/rooms/:room', async (req, res) => {
-//     // get the room from the database
-//     // if the room is still active, send the room data to the client
-//     // if the room is not active, send a 500 error
-//     // if the room does not exist, send a 404 error
-//     const code = await db.getRoom(req.params.room).then(async (row) => {
-//         console.log('socket id : ' + req.body.socket);
-
-//         await joinRoom(req.body.socket, row.code);
-//         res.json(row);
-//     }).catch((error) => {
-//         console.log(error);
-//     })
-// });
+app.get('/rooms/:room', async (req, res) => {
+    // get the room from the database, just to stop the client from joining a room that does not exist
+    // if the room is still active, send the room data to the client
+    // if the room does not exist, send a 404 error
+    await db.getRoom(req.params.room).then(async (row) => {
+        // await joinRoom(req.body.socket, row.code); // the socket is already joined in the client
+        res.json(row);
+    }).catch((error) => {
+        console.log(error);
+        res.status(404).json({ error: 'Room not found or expired' });
+    })
+});
 
 // Set up a map of rooms to selected cards
 let roomData = {};
@@ -79,19 +75,35 @@ let roomData = {};
     socketsToNames: {String socketId: String name},
     wordToGuess: String
     win: Boolean
+    gameState: GameState
     }
 */
 // Handle different socket connections
 io.on('connection', (socket) => {
     console.log('A user has connected');
 
+    socket.on('query game state', async (room) => {
+        console.log(`Socket querying game state ${room}`);
+        const roomInfo = roomData[room];
+        socket.emit('game state', roomInfo?.['gameState']);
+    });
     // 1. Join a room 
     socket.on('join room', async (room, name) => {
         // TODO: call db.getRoom and only the join the room if the room exists.
-        console.log(`${socket.id} joined room ${room}`);
+        console.log(`${socket.id} joining room ${room}`);
         await joinRoom(socket.id, room);
-        // Add the clues to the map of clues
 
+        // DO NOT ALLOW TO JOIN ROOM (state) when room is in the wrong state 
+        if (roomData[room]?.['gameState'] !== undefined &&
+            ![GameState.LOADING_PLAYERS, GameState.ROUND_END].includes(roomData[room]?.['gameState'])) {
+            // room is in the wrong state
+            console.log("Player join fail: Room is in the wrong state");
+            // send the game state to the socket; unnecessary but fine
+            socket.to(room).emit('game state', roomData[room]['gameState']);
+            return;
+        }
+
+        // Add the clues to the map of clues
         if (!roomData[room] || Object.keys(roomData[room]).length === 0) {
             roomData[room] = {};
             roomData[room]['clues'] = {};
@@ -99,10 +111,9 @@ io.on('connection', (socket) => {
             roomData[room]['guesser'] = socket.id;
             roomData[room]['cluers'] = [];
 
-            // get a word from the database
-            roomData[room]['wordToGuess'] = db.getWord();
             roomData[room]['win'] = false;
             socket.to(room).emit('game state', GameState.LOADING_PLAYERS);
+            roomData[room]['gameState'] = GameState.LOADING_PLAYERS;
             roomData[room]['socketsToNames'] = {};
         } else {
             // if the room already exists, you are a cluer
@@ -124,6 +135,8 @@ io.on('connection', (socket) => {
     // 2. Handle the cluer clue-giving
     socket.on('clue', (clue, room) => {
         console.log(`User clue ${clue} in room ${room}`);
+        // TODO: there was an issue that a clue was sent and the room got cleared already. 
+        // then the server went down. I think I can catch this error and log
         roomData[room]['clues'][socket.id] = clue;
         // clue submitted by a cluer
         socket.to(room).emit('clue submitted', socket.id, clue);
@@ -138,6 +151,7 @@ io.on('connection', (socket) => {
             // the guesser guessed the word correctly
             roomData[room]['win'] = true;
             socket.to(room).emit('game state', GameState.ROUND_END);
+            roomData[room]['gameState'] = GameState.ROUND_END;
             socket.to(room).emit('room state', roomData[room]);
         }
     });
@@ -146,6 +160,7 @@ io.on('connection', (socket) => {
     socket.on('give up', (room) => {
         console.log(`User gave up in room ${room}`);
         socket.to(room).emit('game state', GameState.ROUND_END);
+        roomData[room]['gameState'] = GameState.ROUND_END;
     });
 
     // 4. Handle the next round 
@@ -219,12 +234,15 @@ const joinRoom = async (socketId, room) => {
             socket.join(room);
         }
     });
+
 }
 
-const resetCluesAndWord = (socket, room) => {
+const resetCluesAndWord = async (socket, room) => {
     roomData[room]['clues'] = {};
-    roomData[room]['wordToGuess'] = db.getWord(); // new word
+    roomData[room]['wordToGuess'] = await db.getWord(); // new word
+    console.log(`New word: ${roomData[room]['wordToGuess']}`);
     roomData[room]['win'] = false;
+    roomData[room]['gameState'] = GameState.WRITE_CLUES;
     // start the next round
     socket.to(room).emit('game state', GameState.WRITE_CLUES);
     // broadcast to the room the room state 
@@ -243,9 +261,11 @@ const sendCluers = (socket, room) => {
     if (Object.keys(clues).length === numPlayers - 1) {
         // Emit the updated array of selected cards to all connected clients
         socket.to(room).emit('game state', GameState.REVEAL_CLUES);
+        roomData[room]['gameState'] = GameState.REVEAL_CLUES;
         // emit new game state 2 seconds after 
         setTimeout(() => {
             socket.to(room).emit('game state', GameState.GUESS);
+            roomData[room]['gameState'] = GameState.GUESS;
         }, 2000);
     }
 }

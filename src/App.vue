@@ -3,19 +3,23 @@
 </script>
 
 <template>
-  <div>
+  <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div class="navigation">
 
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
     <router-link to="/home">Go to Home</router-link>
-    <router-link to="/rooms/plfw9z">Go to room p</router-link>
-    <router-link to="/rooms/7mjam7">Go to room 7</router-link>
+    <router-link to="/new-room">Join / Create Room</router-link>
   </div>
   <router-view />
-  
+
 </template>
 
 <style scoped>
-
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin: 1rem 0;
+}
 
 .logo {
   display: block;

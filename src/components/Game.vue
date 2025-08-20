@@ -4,6 +4,7 @@ import Guesser from './Guesser.vue'
 import Cluer from './Cluer.vue'
 import Players from './Players.vue'
 import { GameState } from '../utils'
+import NotFound from './404.vue'
 
 const URL = process.env.NODE_ENV === "production" ?
     "msfeng.local:3000" : "http://localhost:3000";
@@ -15,6 +16,7 @@ export default {
             clues: {
                 cluer: clue
             }, 
+            players: [String], // list of all socket ids
             guesser: String, 
             cluers: [String],
             socketsToNames: {String socketId: String name},
@@ -35,6 +37,7 @@ export default {
             name: '',
             changeNameModal: false,
             gameReady: false,
+            roomExists: false,
             room: this.$route.params.id.toString(),
             gameState: GameState.LOADING_PLAYERS,
             // clues: {},
@@ -47,8 +50,9 @@ export default {
         $route(to, from) {
             // react to route changes...
             // this.socket.emit('join room', this.$route.params.id);
-            this.createSockets();
             this.room = this.$route.params.id.toString();
+            this.checkRoom();
+            this.createSockets();
         },
         socketId(to, from) {
             this.createSockets();
@@ -61,9 +65,24 @@ export default {
         // }
     },
     created() {
+        this.checkRoom();
+        // create sockets
         this.createSockets();
+        console.log("game ready:" + this.gameReady);
     },
     methods: {
+        checkRoom() {
+            // check if the room exists 
+            fetch(`${URL}/rooms/${this.$route.params.id}`)
+                .then(response => {
+                    console.log(response);
+                    if (response.ok) this.roomExists = true;
+                    else {
+                        console.error("Room does not exist");
+                        this.roomExists = false;
+                    }
+                })
+        },
         createSockets() {
             console.log('i am socket ' + this.socketId);
 
@@ -75,6 +94,7 @@ export default {
                 console.log("is this err? " + err);
                 console.log('connected as ' + this.socket.id);
                 this.socketId = this.socket.id;
+                this.socket.emit('query game state', this.$route.params.id);
                 this.changeNameModal = true;
                 this.gameReady = true;
             });
@@ -95,6 +115,9 @@ export default {
             });
 
             this.socket.on('game state', (gameState) => {
+                if (gameState === null) {
+                    return;
+                }
                 this.gameState = gameState;
                 console.log('gameState is ' + gameState);
             });
@@ -103,24 +126,32 @@ export default {
         rename() {
             this.changeNameModal = false;
             this.socket.emit('join room', this.$route.params.id, this.name);
+        },
+        playLogic() {
+            // if the game is in progress, then the player can't join
+            return ![GameState.LOADING_PLAYERS, GameState.ROUND_END].includes(this.gameState)
+                && !this.roomState.players.includes(this.socketId);
         }
     },
-    components: { Guesser, Cluer, Players }
+    components: { Guesser, Cluer, Players, NotFound }
 }
 </script>
 
 <template>
-    <main class="main" v-if="gameReady">
-        <div>
-            <h1>Just One</h1>
+    <main class="main" v-if="roomExists && gameReady">
+        <div v-if="playLogic()">
+            Sorry, you cannot join this game. It is already in progress. Please refresh and try again
+        </div>
+        <div v-else>
             <div v-if="changeNameModal" class="modal">
                 <div class="modal-content">
 
                     <p> Choose a name</p>
                     <input v-model="name">
-                    <button class="close" @click="rename" @disabled="name == ''">Submit</button>
+                    <button class="close" @click="rename" :disabled="name == ''">Submit</button>
                 </div>
             </div>
+            <h1>Just One</h1>
             Room: {{ room }}
             <Guesser v-if="roomState.guesser === socketId" :gameState="gameState" :socket="socket"
                 :roomState="roomState"></Guesser>
@@ -131,6 +162,9 @@ export default {
         </div>
 
     </main>
+    <div v-else-if="!roomExists">
+        <NotFound></NotFound>
+    </div>
     <div v-else>
         <h1>Just One</h1>
         <p>Server is down. Sorry!</p>
@@ -144,7 +178,7 @@ export default {
     z-index: 1;
     /* Sit on top */
     left: 0;
-    top: 0;
+    top: 50%;
     width: 100%;
     /* Full width */
     height: 100%;

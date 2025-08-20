@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import * as VueRouter from 'vue-router'
 import Game from './components/Game.vue'
+import Home from './components/Home.vue'
+import NewRoom from './components/NewRoom.vue'
 import './assets/main.css'
 import ToastPlugin from 'vue-toast-notification';
 
@@ -11,8 +13,9 @@ import ToastPlugin from 'vue-toast-notification';
 // Each route should map to a component.
 // We'll talk about nested routes later.
 const routes = [
-  { path: '/home', component: null },
-  { path: '/rooms/:id', component: Game },
+  { path: '/home', component: Home },
+  { path: '/rooms/:id', name: "Rooms", component: Game },
+  { path: '/new-room', component: NewRoom } // New route for creating a room
   
 ]
 

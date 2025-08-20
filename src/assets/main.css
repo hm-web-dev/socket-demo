@@ -11,13 +11,42 @@
 a,
 .green {
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
+  color: var(--color-bright-green);
   transition: 0.4s;
 }
 
+input {
+  border: none;
+  outline: none;
+  border-bottom: .2em solid var(--color-bright-green);
+  background: rgba(var(--color-bright-green), .2);
+  border-radius: .2em .2em 0 0;
+  padding: .4em;
+  color: var(--color-bright-green);
+  margin: 0 1em 0 0;
+}
+
+button {
+  appearance: none;
+  border: .2em solid var(--color-bright-green);
+  background: var(--color-background);
+  padding: .85em 1.5em;
+  color: var(--color-bright-green);
+  border-radius: 2em;
+  transition: 1s;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: var(--color-bright-green);
+    color: #fff;
+  }
+}
+
+
 @media (hover: hover) {
   a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+    background-color: var(--highlight-color);
   }
 }
 

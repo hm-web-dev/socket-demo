@@ -75,6 +75,7 @@ export default {
             // computed props can't listen to the clue submitted event:
             // instead once the clues change we can get the cluer to write 
             this.socket.on('clue submitted', (socketId, _clue) => {
+                console.log("clue submitted: " + _clue);
                 this.playerStates[socketId] = PLAYER_STATES.CLUER_WRITING_DONE;
             });
             // TODO: do something with user leaving the room: socket event 'user left'
