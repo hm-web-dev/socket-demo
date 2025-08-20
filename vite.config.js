@@ -6,6 +6,7 @@ import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '', // Set base to empty string for relative paths
   plugins: [vue()],
   resolve: {
     alias: {
