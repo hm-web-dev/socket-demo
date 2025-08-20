@@ -2,10 +2,11 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
+require('dotenv').config();
 
 // Import the database functions
 const db = require('./db');
-
+const PORT = process.env.VITE_PORT || 3000;
 // Import GameState 
 const { GameState } = require('./constants');
 const allowedOrigins = [
@@ -24,7 +25,6 @@ app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
-        console.log(`CORS: Allowed origin ${origin}`);
     }
     // Allow specific requests
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -278,6 +278,6 @@ const sendCluers = (socket, room) => {
 /* END SOCKET HELPER FUNCTIONS */
 
 // Start the server
-server.listen(3000, () => {
-    console.log('Server listening on port 3000');
+server.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
 });

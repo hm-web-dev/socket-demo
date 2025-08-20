@@ -1,17 +1,17 @@
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+const SERVER_URL = process.env.NODE_ENV === "production" ? import.meta.env.VITE_SERVER_URL + ":" + import.meta.env.VITE_PORT : 'http://localhost:3000';
 
 /* THIS IS FROM THE SERVER. IF YOU MAKE A CHANGE TO THIS CONSTANT, 
 PLEASE UPDATE GameState in server/constants.js */
-const GameState = Object.freeze({ 
-    LOADING_PLAYERS: 0, 
-    WRITE_CLUES: 1, 
-    REVEAL_CLUES: 2, 
+const GameState = Object.freeze({
+    LOADING_PLAYERS: 0,
+    WRITE_CLUES: 1,
+    REVEAL_CLUES: 2,
     GUESS: 3,
     ROUND_END: 4
-}); 
+});
 
 // given map clues: {
-   //  cluer: clue
+//  cluer: clue
 // }, 
 // return { cluer: String, clue: String, isDupe: Boolean}
 const cluesMarkDupes = (clues) => {

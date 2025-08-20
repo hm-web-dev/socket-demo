@@ -18,6 +18,7 @@ export default {
                     'Content-Type': 'application/json'
                 }
             };
+            
             fetch(SERVER_URL + '/createRoom', options).then(response =>
                 response.json())
                 .then(data => {
@@ -47,6 +48,7 @@ export default {
         },
         copyLink() {
             const link = `${window.location.origin}/#/rooms/${this.roomCode}`;
+            console.log(window.location);
             navigator.clipboard.writeText(link).then(() => {
                 this.toastShow = true;
                 setTimeout(() => {
