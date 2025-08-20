@@ -3,11 +3,8 @@ import { io } from 'socket.io-client'
 import Guesser from './Guesser.vue'
 import Cluer from './Cluer.vue'
 import Players from './Players.vue'
-import { GameState } from '../utils'
+import { GameState, SERVER_URL} from '../utils'
 import NotFound from './404.vue'
-
-const URL = process.env.NODE_ENV === "production" ?
-    import.meta.env.SERVER_URL : "http://localhost:3000";
 
 export default {
     data() {
@@ -32,7 +29,7 @@ export default {
                 win: false,
                 socketsToNames: {}, // TODO: make it a Map object instead, but server can't stringify data that well
             },
-            socket: io(URL),
+            socket: io(SERVER_URL),
             socketId: '',
             name: '',
             changeNameModal: false,

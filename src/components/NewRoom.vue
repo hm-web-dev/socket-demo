@@ -1,6 +1,5 @@
 <script>
-const API_URL = 'http://localhost:3000'; // TODO: change this to production URL
-
+import { SERVER_URL } from '../utils';
 export default {
     data() {
         return {
@@ -19,7 +18,7 @@ export default {
                     'Content-Type': 'application/json'
                 }
             };
-            fetch(API_URL + '/createRoom', options).then(response =>
+            fetch(SERVER_URL + '/createRoom', options).then(response =>
                 response.json())
                 .then(data => {
                     if (data.error) {
@@ -43,7 +42,7 @@ export default {
                 this.errorMessage = 'Room code must be 6 characters long';
                 setTimeout(() => {
                     this.errorMessage = '';
-                }, 4000); // hide the toast after 2 seconds
+                }, 2000); // hide the toast after 2 seconds
             }
         },
         copyLink() {
@@ -52,7 +51,7 @@ export default {
                 this.toastShow = true;
                 setTimeout(() => {
                     this.toastShow = false;
-                }, 4000); // hide the toast after 2 seconds
+                }, 2000); // hide the toast after 2 seconds
             }).catch(err => {
                 console.error('Failed to copy link: ', err);
             });
@@ -64,8 +63,7 @@ export default {
     <!-- this is a component where you have a button on the left to create a new room, and then navigates you to the room (also you can copy the link)
  and an input box on the right to join a room with a code -->
     <div class="new-room">
-        <div v-if="errorMessage" class="toast" :class="{ 'show': errorMessage }">There was an error creating a
-            room: {{ errorMessage }}
+        <div class="toast" :class="{ 'show': errorMessage }">There was an error with your room: {{ errorMessage }}
         </div>
         <div class="section">
             <div class="create-room">
@@ -123,14 +121,15 @@ export default {
     text-align: center;
     border-radius: 5px;
     padding: 10px;
+    /* in the middle of the screen */
     position: absolute;
     top: 50%;
     left: 40%;
-    align-self:center;
+    align-self: center;
     z-index: 1;
     background-color: var(--color-background-soft);
     opacity: 0;
-    transition: opacity 1s, visibility 1s;
+    transition: opacity 1s;
 }
 
 

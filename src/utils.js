@@ -1,3 +1,5 @@
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+
 /* THIS IS FROM THE SERVER. IF YOU MAKE A CHANGE TO THIS CONSTANT, 
 PLEASE UPDATE GameState in server/constants.js */
 const GameState = Object.freeze({ 
@@ -48,4 +50,4 @@ const cluesDupesRedacted = (clues) => {
     }));
 }
 
-export { GameState, cluesMarkDupes, cluesDupesRedacted };
+export { GameState, cluesMarkDupes, cluesDupesRedacted, SERVER_URL };
