@@ -1,3 +1,5 @@
+server/socket-game.db
+.env
 package-lock.json
 # Logs
 logs

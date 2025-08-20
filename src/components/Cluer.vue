@@ -10,7 +10,8 @@ export default {
             guesser: String,
             players: Array,
             wordToGuess: String,
-            win: Boolean
+            win: Boolean,
+            socketsToNames: Map,
         },
     },
     data() {
@@ -67,7 +68,7 @@ export default {
                 <p>All clues:</p>
                 <ul>
                     <li v-for="c in submittedClues" :key="c" :class="c.isDupe ? 'dupe' : null">
-                        Cluer: {{ c.cluer }}, Clue: {{ c.clue }}
+                        Cluer: {{ roomState.socketsToNames[c.cluer] }}, Clue: {{ c.clue }}
                     </li>
                 </ul>
                 <div v-if="gameState == GameState.GUESS">

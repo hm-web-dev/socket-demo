@@ -10,7 +10,8 @@ export default {
             guesser: String,
             players: Array,
             wordToGuess: String,
-            win: Boolean
+            win: Boolean,
+            socketsToNames: Map,
         },
     },
     data() {
@@ -81,7 +82,7 @@ export default {
         <div v-else-if="gameState === GameState.GUESS">
             <h1>Clues</h1>
             <ul>
-                <li v-for="c in submittedClues" :key="c">Cluer: {{ c.cluer }}, Clue: {{ c.clue }}</li>
+                <li v-for="c in submittedClues" :key="c">Cluer: {{ roomState.socketsToNames[c.cluer] }}, Clue: {{ c.clue }}</li>
             </ul>
             <h1>Write your guess</h1>
             <input type="text" v-model="guess" />

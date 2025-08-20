@@ -5,6 +5,8 @@ This is a socket demo that was started using `npm init vue`.
 Then Chat-GPT wrote server.js and some Vue code that I organized into `App.vue`.  Pretty neat if you ask me! 
 
 TODO: 
+- User experience feature: save your socket id from localstorage so you can rejoin a room if you refresh the page 
+- Play audio and sounds throughout the game
 - Word DB: Allow voting on words
 - Allow adding words to the DB
 
