@@ -10,7 +10,8 @@ const db = require('./db');
 const { GameState } = require('./constants');
 const allowedOrigins = [
             "http://localhost:5173",
-            "msfeng.local"
+            "msfeng.local",
+            "https://irenefeng.com",
         ]
 // Create the express app and the server
 const app = express();
@@ -41,6 +42,10 @@ const io = socketIO(server, {
         allowedOrigins: allowedOrigins,
         // origin: "*", // allow all origins 
     }
+});
+
+app.get('/', (req, res) => {
+    res.send('Welcome to the Just one game server!');
 });
 
 // Create a new room 
