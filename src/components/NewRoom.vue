@@ -37,10 +37,13 @@ export default {
                 });
         },
         joinRoom() {
-            if (this.roomCode) {
+            if (this.roomCode.length === 6) {
                 this.$router.push({ path: `/rooms/${this.roomCode}` });
             } else {
-                alert('Please enter a room code');
+                this.errorMessage = 'Room code must be 6 characters long';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 4000); // hide the toast after 2 seconds
             }
         },
         copyLink() {
@@ -49,7 +52,7 @@ export default {
                 this.toastShow = true;
                 setTimeout(() => {
                     this.toastShow = false;
-                }, 2000); // hide the toast after 2 seconds
+                }, 4000); // hide the toast after 2 seconds
             }).catch(err => {
                 console.error('Failed to copy link: ', err);
             });
@@ -61,12 +64,12 @@ export default {
     <!-- this is a component where you have a button on the left to create a new room, and then navigates you to the room (also you can copy the link)
  and an input box on the right to join a room with a code -->
     <div class="new-room">
+        <div v-if="errorMessage" class="toast" :class="{ 'show': errorMessage }">There was an error creating a
+            room: {{ errorMessage }}
+        </div>
         <div class="section">
             <div class="create-room">
                 <button @click="createRoom">Create New Room</button>
-                <div v-if="errorMessage" class="toast" :class="{ 'show': errorMessage }">There was an error creating a
-                    room: {{ errorMessage }}
-                </div>
                 <div v-if="createdRoom">
                     <p>Room created! Click this link to go (copy to share):</p>
                     <router-link :to="{ name: 'Rooms', params: { id: roomCode } }">/rooms/{{ roomCode }}</router-link>
@@ -116,11 +119,14 @@ export default {
 
 .toast {
     visibility: hidden;
-    min-width: 150px;
+    width: 20%;
     text-align: center;
     border-radius: 5px;
     padding: 10px;
     position: absolute;
+    top: 50%;
+    left: 40%;
+    align-self:center;
     z-index: 1;
     background-color: var(--color-background-soft);
     opacity: 0;

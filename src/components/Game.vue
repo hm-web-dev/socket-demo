@@ -8,63 +8,63 @@ import NotFound from './404.vue'
 
 const URL = process.env.NODE_ENV === "production" ?
     import.meta.env.SERVER_URL : "http://localhost:3000";
-    
-    export default {
-        data() {
-            return {
-                /* 
-                clues: {
-                    cluer: clue
-                    }, 
-                    players: [String], // list of all socket ids
-                    guesser: String, 
-                    cluers: [String],
-                    socketsToNames: {String socketId: String name},
-                    wordToGuess: String
-                    win: Boolean
-                    }
-                    */
-                   roomState: {
-                       clues: {},
-                       guesser: '',
-                       players: [],
-                       wordToGuess: '',
-                       win: false,
-                       socketsToNames: {}, // TODO: make it a Map object instead, but server can't stringify data that well
-                    },
-                    socket: io(URL),
-                    socketId: '',
-                    name: '',
-                    changeNameModal: false,
-                    gameReady: false,
-                    roomExists: false,
-                    room: this.$route.params.id.toString(),
-                    gameState: GameState.LOADING_PLAYERS,
-                    // clues: {},
-                    // guesserSocket: '',
-                    // players: [],
-                    // wordToGuess: '',
+
+export default {
+    data() {
+        return {
+            /* 
+            clues: {
+                cluer: clue
+                }, 
+                players: [String], // list of all socket ids
+                guesser: String, 
+                cluers: [String],
+                socketsToNames: {String socketId: String name},
+                wordToGuess: String
+                win: Boolean
                 }
+                */
+            roomState: {
+                clues: {},
+                guesser: '',
+                players: [],
+                wordToGuess: '',
+                win: false,
+                socketsToNames: {}, // TODO: make it a Map object instead, but server can't stringify data that well
             },
-            watch: {
-                $route(to, from) {
-                    // react to route changes...
-                    // this.socket.emit('join room', this.$route.params.id);
-                    this.room = this.$route.params.id.toString();
-                    this.checkRoom();
-                    this.createSockets();
-                },
-                socketId(to, from) {
-                    this.createSockets();
-                },
-                guesserSocket(to, from) {
-                    this.createSockets();
-                },
-                // clues(to, from) {
-                    //     this.createSockets();
-                    // }
-                },
-                created() {
+            socket: io(URL),
+            socketId: '',
+            name: '',
+            changeNameModal: false,
+            gameReady: false,
+            roomExists: false,
+            room: this.$route.params.id.toString(),
+            gameState: GameState.LOADING_PLAYERS,
+            // clues: {},
+            // guesserSocket: '',
+            // players: [],
+            // wordToGuess: '',
+        }
+    },
+    watch: {
+        $route(to, from) {
+            // react to route changes...
+            // this.socket.emit('join room', this.$route.params.id);
+            this.room = this.$route.params.id.toString();
+            this.checkRoom();
+            this.createSockets();
+        },
+        socketId(to, from) {
+            this.createSockets();
+        },
+        guesserSocket(to, from) {
+            this.createSockets();
+        },
+        // clues(to, from) {
+        //     this.createSockets();
+        // }
+    },
+    created() {
         console.log(import.meta.env.VITE_SERVER_URL);
         this.checkRoom();
         // create sockets
