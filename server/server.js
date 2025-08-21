@@ -1,19 +1,20 @@
 // Import required libraries
 const express = require('express');
+const https = require('https');
 const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
 
 // Import the database functions
 const db = require('./db');
-const PORT = process.env.VITE_PORT || 3000;
+const PORT = process.env.NODE_ENV === "production" ? process.env.VITE_PORT : 3000;
 // Import GameState 
 const { GameState } = require('./constants');
 const allowedOrigins = [
-            "http://localhost:5173",
-            "msfeng.local",
-            "https://irenefeng.com",
-        ]
+    "http://localhost:5173",
+    "msfeng.local",
+    "https://irenefeng.com",
+]
 // Create the express app and the server
 const app = express();
 app.use(express.json());
@@ -34,8 +35,24 @@ app.use((req, res, next) => {
     next();
 });
 
+// SSL Certificate setup for production 
+let httpsOptions = {};
+if (process.env.NODE_ENV === "production") {
+    const fs = require('fs');
+
+    const cert = fs.readFileSync(process.env.SSL_CERT_PATH);
+    const ca = fs.readFileSync(process.env.SSL_CA_PATH);
+    const key = fs.readFileSync(process.env.SSL_KEY_PATH);
+    httpsOptions = {
+        cert: cert,
+        ca: ca,
+        key: key,
+    }
+}
+const hostname = 'localhost';
+const httpsport = 443;
 // Create the socket server and attach it to the express server
-const server = http.createServer(app);
+const server = process.env.NODE_ENV === "production" ? https.createServer(app) : http.createServer(app);
 const io = socketIO(server, {
     // have to add cors again for sockets
     cors: {
