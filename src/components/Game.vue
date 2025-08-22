@@ -62,7 +62,6 @@ export default {
         // }
     },
     created() {
-        console.log(import.meta.env.VITE_SERVER_URL);
         this.checkRoom();
         // create sockets
         this.createSockets();
@@ -71,7 +70,7 @@ export default {
     methods: {
         checkRoom() {
             // check if the room exists 
-            fetch(`${URL}/rooms/${this.$route.params.id}`)
+            fetch(`${SERVER_URL}/rooms/${this.$route.params.id}`)
                 .then(response => {
                     console.log(response);
                     if (response.ok) this.roomExists = true;

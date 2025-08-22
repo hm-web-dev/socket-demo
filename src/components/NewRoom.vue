@@ -13,10 +13,7 @@ export default {
 
         createRoom() {
             const options = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                method: 'POST'
             };
             
             fetch(SERVER_URL + '/createRoom', options).then(response =>
