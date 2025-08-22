@@ -1,4 +1,4 @@
-const SERVER_URL = process.env.NODE_ENV === "production" ? import.meta.env.VITE_SERVER_URL + ":" + import.meta.env.VITE_PORT : 'http://localhost:3000';
+const SERVER_URL = process.env.NODE_ENV === "production" ? import.meta.env.VITE_SERVER_URL : 'http://localhost:3000';
 
 /* THIS IS FROM THE SERVER. IF YOU MAKE A CHANGE TO THIS CONSTANT, 
 PLEASE UPDATE GameState in server/constants.js */
