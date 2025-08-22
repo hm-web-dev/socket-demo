@@ -69,12 +69,19 @@ export default {
 
         <h1>Guesser!</h1>
         <div v-if="gameState === GameState.LOADING_PLAYERS">
-            <h1>Waiting for players...</h1>
-            Click to begin the round! 
-            <button :disabled="roomState.players.length < 3" @click="socket.emit('start round', this.$route.params.id)">Start Game</button>
+            <div v-if="roomState.players.length < 3" class="centered-container">
+                <h1>Waiting for players</h1>
+                <div class="loader"></div>
+            </div>
+            <div class="centered-container" v-else>
+                <h2>Enough players to play!</h2>
+                Click to begin the round!
+                <button @click="socket.emit('start round', this.$route.params.id)">Start Game</button>
+            </div>
         </div>
         <div v-else-if="gameState === GameState.WRITE_CLUES">
             <h1>Waiting for other players to submit clues</h1>
+            <div class="loader"></div>
         </div>
         <div v-else-if="gameState === GameState.REVEAL_CLUES">
             <!-- TODO: show some kind of animation -->
@@ -82,7 +89,8 @@ export default {
         <div v-else-if="gameState === GameState.GUESS">
             <h1>Clues</h1>
             <ul>
-                <li v-for="c in submittedClues" :key="c">Cluer: {{ roomState.socketsToNames[c.cluer] }}, Clue: {{ c.clue }}</li>
+                <li v-for="c in submittedClues" :key="c">Cluer: {{ roomState.socketsToNames[c.cluer] }}, Clue: {{ c.clue
+                }}</li>
             </ul>
             <h1>Write your guess</h1>
             <input type="text" v-model="guess" />

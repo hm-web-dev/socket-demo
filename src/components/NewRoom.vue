@@ -15,7 +15,7 @@ export default {
             const options = {
                 method: 'POST'
             };
-            
+
             fetch(SERVER_URL + '/createRoom', options).then(response =>
                 response.json())
                 .then(data => {
@@ -79,10 +79,9 @@ export default {
 
         <div class="divider"></div>
         <div class="section">
-            <div class="join-room">
-                <input v-model="roomCode" placeholder="Enter room code" />
-                <button @click="joinRoom">Join Room</button>
-            </div>
+            <input v-model="roomCode" placeholder="Enter room code" />
+            <button @click="joinRoom">Join Room</button>
+
         </div>
     </div>
 </template>
@@ -131,9 +130,31 @@ export default {
     transition: opacity 1s;
 }
 
-
 .toast.show {
     visibility: visible;
     opacity: 1;
+}
+
+@media only screen and (max-width: 600px) {
+    .new-room {
+        flex-direction: column;
+        justify-content: space-evenly;
+    }
+
+    .divider {
+        /* horizontal divider for mobile instead */
+        width: 100%;
+        border-top: 6px solid var(--highlight-color);
+        height: 6px;
+        border-left: none;
+        margin: 2rem 1rem;
+        position: static;
+    }
+
+    .toast {
+        width: 60%;
+        top: 50%;
+        left: 20%;
+    }
 }
 </style>
