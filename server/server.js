@@ -4,10 +4,10 @@ const https = require('https');
 const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
+const SERVER_PATH = process.env.SERVER_PATH ?? ''; // for production with a subpath
 
 // Import the database functions
 const db = require('./db');
-const PORT = process.env.NODE_ENV === "production" ? process.env.VITE_PORT : 3000;
 // Import GameState 
 const { GameState } = require('./constants');
 const allowedOrigins = [
@@ -49,10 +49,10 @@ if (process.env.NODE_ENV === "production") {
         key: key,
     }
 }
-const hostname = 'localhost';
-const httpsport = 443;
 // Create the socket server and attach it to the express server
 const server = process.env.NODE_ENV === "production" ? https.createServer(app) : http.createServer(app);
+const PORT = process.env.NODE_ENV === "production" ? process.env.VITE_PORT : 3000;
+
 const io = socketIO(server, {
     // have to add cors again for sockets
     cors: {
@@ -61,19 +61,19 @@ const io = socketIO(server, {
     }
 });
 
-app.get('/', (req, res) => {
+app.get('/' + SERVER_PATH, (req, res) => {
     res.send('Welcome to the Just one game server!');
 });
 
 // Create a new room 
-app.post('/createRoom', (req, res) => {
+app.post('/createRoom' + SERVER_PATH, (req, res) => {
     // create an active room in database
     db.createRoom(req, res);
 
 });
 
 // Serve a specific room 
-app.get('/rooms/:room', async (req, res) => {
+app.get('/rooms/:room' + SERVER_PATH, async (req, res) => {
     // get the room from the database, just to stop the client from joining a room that does not exist
     // if the room is still active, send the room data to the client
     // if the room does not exist, send a 404 error
