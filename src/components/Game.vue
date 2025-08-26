@@ -3,7 +3,7 @@ import { io } from 'socket.io-client'
 import Guesser from './Guesser.vue'
 import Cluer from './Cluer.vue'
 import Players from './Players.vue'
-import { GameState, SERVER_URL} from '../utils'
+import { GameState, SERVER_URL } from '../utils'
 import NotFound from './404.vue'
 
 export default {
@@ -17,8 +17,9 @@ export default {
                 guesser: String, 
                 cluers: [String],
                 socketsToNames: {String socketId: String name},
-                wordToGuess: String
-                win: Boolean
+                wordToGuess: String,
+                win: Boolean,
+                round: Integer
                 }
                 */
             roomState: {
@@ -28,6 +29,7 @@ export default {
                 wordToGuess: '',
                 win: false,
                 socketsToNames: {}, // TODO: make it a Map object instead, but server can't stringify data that well
+                round: 1,
             },
             socket: io(SERVER_URL),
             socketId: '',
@@ -41,6 +43,11 @@ export default {
             // guesserSocket: '',
             // players: [],
             // wordToGuess: '',
+        }
+    },
+    computed: {
+        GameState() { // GameState is a JS object, so we need a computed property to access it in the template
+            return GameState;
         }
     },
     watch: {
@@ -97,17 +104,19 @@ export default {
             });
             // Handle selected cards
             this.socket.on('room state', (stateData) => {
+                console.log(stateData);
                 this.roomState.clues = stateData['clues'];
                 this.roomState.guesser = stateData['guesser'];
                 this.roomState.wordToGuess = stateData['wordToGuess'];
                 // use the object spread operator to copy array
                 this.roomState.players = [...stateData['cluers'], stateData['guesser']];
                 this.roomState.win = stateData['win'];
+                console.log("this is not working")
                 console.log("socketsToNames");
-                console.log(stateData);
                 console.log(stateData['socketsToNames']);
                 this.roomState.socketsToNames = stateData['socketsToNames'];
-
+                this.roomState.round = stateData['round'];
+                this.roomState.guesses = stateData['guesses'];
 
             });
 
@@ -122,12 +131,16 @@ export default {
         },
         rename() {
             this.changeNameModal = false;
+            console.log("renaming to " + this.name);
             this.socket.emit('join room', this.$route.params.id, this.name);
         },
         playLogic() {
             // if the game is in progress, then the player can't join
-            return ![GameState.LOADING_PLAYERS, GameState.ROUND_END].includes(this.gameState)
+            return ![GameState.LOADING_PLAYERS, GameState.WRITE_CLUES, GameState.ROUND_END].includes(this.gameState)
                 && !this.roomState.players.includes(this.socketId);
+        },
+        nextRound() {
+            this.socket.emit('next round', this.$route.params.id);
         }
     },
     components: { Guesser, Cluer, Players, NotFound }
@@ -141,7 +154,7 @@ export default {
         </div>
         <div v-else>
             <div v-if="changeNameModal" class="modal">
-                <div class="modal-content">
+                <div class="well-small">
 
                     <p> Choose a name</p>
                     <input v-model="name">
@@ -149,11 +162,14 @@ export default {
                 </div>
             </div>
             <h1>Just One</h1>
-            Room: {{ room }}
+            Room: {{ room }} | Round: {{ roomState.round }}
             <Guesser v-if="roomState.guesser === socketId" :gameState="gameState" :socket="socket"
                 :roomState="roomState"></Guesser>
-            <Cluer v-else :gameState="gameState" :socket="socket" :roomState="roomState"></Cluer>
+            <Cluer v-else :gameState="gameState" :socket="socket" :roomState="roomState"
+                :key="`${socketId}-${roomState.round}`"></Cluer>
         </div>
+        <button v-if="gameState === GameState.ROUND_END" @click="nextRound"> Next Round </button>
+
         <div>
             <Players :socket="socket" :gameState="gameState" :roomState="roomState"></Players>
         </div>
@@ -186,14 +202,6 @@ export default {
     /* Fallback color */
     background-color: rgba(0, 0, 0, 0.4);
     /* Black w/ opacity */
-}
-
-.modal-content {
-    background: var(--color-background-soft);
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
 }
 
 .close {

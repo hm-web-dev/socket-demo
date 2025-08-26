@@ -81,7 +81,9 @@ let roomData = {};
     socketsToNames: {String socketId: String name},
     wordToGuess: String
     win: Boolean
-    gameState: GameState
+    gameState: GameState,
+    round: Number,
+    guesses: [String]
     }
 */
 // Handle different socket connections
@@ -100,14 +102,14 @@ io.on('connection', (socket) => {
         await joinRoom(socket.id, room);
 
         // DO NOT ALLOW TO JOIN ROOM (state) when room is in the wrong state 
-        if (roomData[room]?.['gameState'] !== undefined &&
-            ![GameState.LOADING_PLAYERS, GameState.ROUND_END].includes(roomData[room]?.['gameState'])) {
-            // room is in the wrong state
-            console.log("Player join fail: Room is in the wrong state");
-            // send the game state to the socket; unnecessary but fine
-            socket.to(room).emit('game state', roomData[room]['gameState']);
-            return;
-        }
+        // if (roomData[room]?.['gameState'] !== undefined &&
+        //     ![GameState.LOADING_PLAYERS, GameState.ROUND_END].includes(roomData[room]?.['gameState'])) {
+        //     // room is in the wrong state
+        //     console.log("Player join fail: Room is in the wrong state");
+        //     // send the game state to the socket; unnecessary but fine
+        //     socket.to(room).emit('game state', roomData[room]['gameState']);
+        //     return;
+        // }
 
         // Add the clues to the map of clues
         if (!roomData[room] || Object.keys(roomData[room]).length === 0) {
@@ -116,11 +118,12 @@ io.on('connection', (socket) => {
             // you are the first person, so you are the guesser (for now)
             roomData[room]['guesser'] = socket.id;
             roomData[room]['cluers'] = [];
-
+            roomData[room]['round'] = 1;
             roomData[room]['win'] = false;
             socket.to(room).emit('game state', GameState.LOADING_PLAYERS);
             roomData[room]['gameState'] = GameState.LOADING_PLAYERS;
             roomData[room]['socketsToNames'] = {};
+            roomData[room]['guesses'] = [];
         } else {
             // if the room already exists, you are a cluer
             roomData[room]['cluers'].push(socket.id);
@@ -158,8 +161,10 @@ io.on('connection', (socket) => {
             roomData[room]['win'] = true;
             socket.to(room).emit('game state', GameState.ROUND_END);
             roomData[room]['gameState'] = GameState.ROUND_END;
-            socket.to(room).emit('room state', roomData[room]);
         }
+        roomData[room]['guesses'].push(guess);
+        console.log("guess!");
+        socket.to(room).emit('room state', roomData[room]);
     });
 
     // 3.5 Handle gives up
@@ -171,13 +176,16 @@ io.on('connection', (socket) => {
 
     // 4. Handle the next round 
     socket.on('next round', (room) => {
-        // TODO: only allow to start the next round if the game state is ROUND_END
-        // I don't have this as a part of the roomData but I should.
+        if (roomData[room]['gameState'] !== GameState.ROUND_END) {
+            console.log(`Cannot start next round in room ${room}. Game is not in ROUND_END state. A state error probably`);
+            return;
+        }
         console.log(`Starting next round in room ${room}`);
         // rotate guesser
         const guesser = roomData[room]['cluers'].shift();
         roomData[room]['cluers'].push(roomData[room]['guesser']);
         roomData[room]['guesser'] = guesser;
+        roomData[room]['round'] += 1;
         // reset the clues
         resetCluesAndWord(socket, room);
     });
@@ -245,6 +253,7 @@ const joinRoom = async (socketId, room) => {
 
 const resetCluesAndWord = async (socket, room) => {
     roomData[room]['clues'] = {};
+    roomData[room]['guesses'] = [];
     roomData[room]['wordToGuess'] = await db.getWord(); // new word
     console.log(`New word: ${roomData[room]['wordToGuess']}`);
     roomData[room]['win'] = false;

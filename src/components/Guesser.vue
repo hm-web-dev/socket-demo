@@ -1,5 +1,6 @@
 <script>
 import { GameState, cluesDupesRedacted } from '../utils'
+import PreviousGuesses from './PreviousGuesses.vue';
 
 export default {
     props: {
@@ -12,6 +13,7 @@ export default {
             wordToGuess: String,
             win: Boolean,
             socketsToNames: Map,
+            guesses: Array,
         },
     },
     data() {
@@ -46,18 +48,15 @@ export default {
                         duration: 1000 * 2,
                         dismissible: true
                     });
-
-                this.guesses.push(this.guess);
-                this.socket.emit('guess', this.guess, this.$route.params.id);
                 this.guess = '';
             }
-        },
-        nextRound() {
-            this.socket.emit('next round', this.$route.params.id);
         },
         giveUp() {
             this.socket.emit('give up', this.$route.params.id);
         }
+    },
+    components: {
+        PreviousGuesses
     }
 
 }
@@ -96,17 +95,13 @@ export default {
             <input type="text" v-model="guess" />
             <button @click="writeGuess">Submit Guess</button>
             <button @click="giveUp">Give up</button>
-            <h1 v-if="guesses.length > 0">Previous guesses</h1>
-            <ul>
-                <li v-for="g in guesses" :key="g">{{ g }}</li>
-            </ul>
+            <PreviousGuesses :guesses="roomState.guesses"></PreviousGuesses>
         </div>
         <div v-else-if="gameState === GameState.ROUND_END">
             <h1>Round end</h1>
             <h2>Word was: {{ roomState.wordToGuess }}</h2>
-            <h2 v-if="roomState.win">It took you {{ guesses.length + 1 }} guesses!</h2>
+            <h2 v-if="roomState.win">It took you {{ roomState.guesses.length + 1 }} guesses!</h2>
             <h2 v-else>Sorry, try again!</h2>
-            <button @click="nextRound"> Next Round </button>
         </div>
     </div>
 </template>

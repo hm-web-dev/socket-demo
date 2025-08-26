@@ -1,5 +1,6 @@
 <script>
 import { GameState, cluesMarkDupes } from '../utils'
+import PreviousGuesses from './PreviousGuesses.vue';
 
 export default {
     props: {
@@ -12,6 +13,7 @@ export default {
             wordToGuess: String,
             win: Boolean,
             socketsToNames: Map,
+            guesses: Array,
         },
     },
     data() {
@@ -30,22 +32,16 @@ export default {
     },
     created() {
         this.socket.on('guesser guessed', (guess) => {
-            // TODO: remove toast. why is this showing up on other components? 
             console.log(guess);
-            let pop = this.$toast.open(
-                {
-                    message: `Guesser guessed ${guess}`,
-                    type: "info",
-                    position: 'top',
-                    duration: 1000 * 2,
-                    dismissible: true
-                });
         })
     },
     methods: {
         sendMessage() {
             this.socket.emit('clue', this.clue, this.$route.params.id);
         }
+    }, 
+    components: {
+        PreviousGuesses
     }
 
 }
@@ -79,10 +75,11 @@ export default {
                 <div v-if="gameState == GameState.GUESS">
                     <h2>Guesser is guessing...</h2>
                     <div class="loader"></div>
+                    <PreviousGuesses :guesses="roomState.guesses" />
                 </div>
                 <div v-else-if="gameState == GameState.ROUND_END">
                     <h2>Round over!</h2>
-                    <div v-if="roomState.win"><h2>Nice job! It took you {{ guesses.length + 1 }} guesses!</h2></div>
+                    <div v-if="roomState.win"><h2>Nice job! It took you {{ roomState.guesses.length + 1 }} guesses!</h2></div>
                     <h2 v-else>Better luck next time!</h2>
                 </div>
             </div>

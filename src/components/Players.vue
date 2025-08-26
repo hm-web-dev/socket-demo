@@ -61,7 +61,7 @@ export default {
                     // because the socket will take care of changing to writing_done
                     // TODO: LOGIC BUG, need to fix in a second
                     if (this.playerStates[player] && this.gameState === GameState.WRITE_CLUES) {
-                        acc[player] = this.playerStates[player];
+                        acc[player] = this.playerStates[player]; // either writing or writing done
                         return acc;
                     }
                     acc[player] = (this.gameState === GameState.LOADING_PLAYERS) ? PLAYER_STATES.CLUER
