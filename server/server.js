@@ -1,6 +1,5 @@
 // Import required libraries
 const express = require('express');
-const https = require('https');
 const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
@@ -12,7 +11,6 @@ const db = require('./db');
 const { GameState } = require('./constants');
 const allowedOrigins = [
     "http://localhost:5173",
-    "msfeng.local",
     "https://irenefeng.com",
 ]
 // Create the express app and the server
@@ -35,23 +33,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// SSL Certificate setup for production 
-let httpsOptions = {};
-if (process.env.NODE_ENV === "production") {
-    const fs = require('fs');
-
-    const cert = fs.readFileSync(process.env.SSL_CERT_PATH);
-    const ca = fs.readFileSync(process.env.SSL_CA_PATH);
-    const key = fs.readFileSync(process.env.SSL_KEY_PATH);
-    httpsOptions = {
-        cert: cert,
-        ca: ca,
-        key: key,
-    }
-}
 // Create the socket server and attach it to the express server
-const server = process.env.NODE_ENV === "production" ? https.createServer(app) : http.createServer(app);
-const PORT = process.env.NODE_ENV === "production" ? process.env.VITE_PORT : 3000;
+const server = http.createServer(app);
+const PORT = process.env.NODE_ENV === "production" ? process.env.PORT : 3000; // namecheap servers use PORT env var, I have no control over which port gets used on a shared server.
 
 const io = socketIO(server, {
     // have to add cors again for sockets
@@ -298,3 +282,4 @@ const sendCluers = (socket, room) => {
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
 });
+
