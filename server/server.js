@@ -61,19 +61,19 @@ const io = socketIO(server, {
     }
 });
 
-app.get('/' + SERVER_PATH, (req, res) => {
+app.get(SERVER_PATH + '/', (req, res) => {
     res.send('Welcome to the Just one game server!');
 });
 
 // Create a new room 
-app.post('/createRoom' + SERVER_PATH, (req, res) => {
+app.post(SERVER_PATH + '/createRoom', (req, res) => {
     // create an active room in database
     db.createRoom(req, res);
 
 });
 
 // Serve a specific room 
-app.get('/rooms/:room' + SERVER_PATH, async (req, res) => {
+app.get(SERVER_PATH + '/rooms/:room', async (req, res) => {
     // get the room from the database, just to stop the client from joining a room that does not exist
     // if the room is still active, send the room data to the client
     // if the room does not exist, send a 404 error
