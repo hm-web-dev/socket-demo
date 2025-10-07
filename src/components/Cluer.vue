@@ -62,7 +62,7 @@ export default {
             <h2>The word is <span class="highlight">{{ roomState.wordToGuess }}</span></h2>
             <div v-if="gameState == GameState.WRITE_CLUES">
                 <input type="text" v-model="clue" />
-                <button @click="sendMessage">Send Clue</button>
+                <button @click="sendMessage" :disabled="clue.length == 0 || clue.includes(` `)">Send Clue</button>
                 <p> {{ Object.keys(roomState.clues).length }} clues submitted... </p>
             </div>
             <div v-else-if="new Set([GameState.REVEAL_CLUES, GameState.GUESS, GameState.ROUND_END]).has(gameState)">
